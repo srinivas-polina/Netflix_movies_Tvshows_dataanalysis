@@ -22,20 +22,20 @@ The data for this project is sourced from the Kaggle dataset:
 
 ```sql
 DROP TABLE IF EXISTS netflix;
-CREATE TABLE netflix
+create table netflix1
 (
-    show_id      VARCHAR(5),
-    type         VARCHAR(10),
-    title        VARCHAR(250),
-    director     VARCHAR(550),
-    casts        VARCHAR(1050),
-    country      VARCHAR(550),
-    date_added   VARCHAR(55),
-    release_year INT,
-    rating       VARCHAR(15),
-    duration     VARCHAR(15),
-    listed_in    VARCHAR(250),
-    description  VARCHAR(550)
+    show_id varchar(10),
+    type varchar(10),
+    title varchar(110),
+    director varchar(220),
+    casts varchar(800),
+    country varchar(150), 
+    date_added varchar(50), 
+    release_year int, 
+    rating varchar(10), 
+    duration varchar(15), 
+    listed_in varchar(100), 
+    description varchar(300)
 );
 ```
 
@@ -56,27 +56,21 @@ GROUP BY 1;
 ### 2. Find the Most Common Rating for Movies and TV Shows
 
 ```sql
-WITH RatingCounts AS (
-    SELECT 
-        type,
-        rating,
-        COUNT(*) AS rating_count
-    FROM netflix
-    GROUP BY type, rating
-),
-RankedRatings AS (
-    SELECT 
-        type,
-        rating,
-        rating_count,
-        RANK() OVER (PARTITION BY type ORDER BY rating_count DESC) AS rank
-    FROM RatingCounts
-)
 SELECT 
-    type,
-    rating AS most_frequent_rating
-FROM RankedRatings
-WHERE rank = 1;
+type,
+rating
+from
+		(
+		select 
+		type, 
+		rating,
+		count(*),
+		RANK() OVER(PARTITION by type order by count(*) DESC) as ranking
+		from netflix1
+		group by 1, 2
+		) as t1
+			
+where ranking =1
 ```
 
 **Objective:** Identify the most frequently occurring rating for each type of content.
@@ -86,7 +80,9 @@ WHERE rank = 1;
 ```sql
 SELECT * 
 FROM netflix
-WHERE release_year = 2020;
+WHERE release_year = 2020
+and 
+type = 'Movie';
 ```
 
 **Objective:** Retrieve all movies released in a specific year.
@@ -94,18 +90,13 @@ WHERE release_year = 2020;
 ### 4. Find the Top 5 Countries with the Most Content on Netflix
 
 ```sql
-SELECT * 
-FROM
-(
-    SELECT 
-        UNNEST(STRING_TO_ARRAY(country, ',')) AS country,
-        COUNT(*) AS total_content
-    FROM netflix
-    GROUP BY 1
-) AS t1
-WHERE country IS NOT NULL
-ORDER BY total_content DESC
-LIMIT 5;
+select 
+UNNEST(STRING_TO_ARRAY(country,',')) AS new_country,
+COUNT(show_id) as total_content
+from netflix1
+group by 1
+order by 2 desc
+limit 5;
 ```
 
 **Objective:** Identify the top 5 countries with the highest number of content items.
@@ -135,14 +126,12 @@ WHERE TO_DATE(date_added, 'Month DD, YYYY') >= CURRENT_DATE - INTERVAL '5 years'
 ### 7. Find All Movies/TV Shows by Director 'Rajiv Chilaka'
 
 ```sql
-SELECT *
-FROM (
-    SELECT 
-        *,
-        UNNEST(STRING_TO_ARRAY(director, ',')) AS director_name
-    FROM netflix
-) AS t
-WHERE director_name = 'Rajiv Chilaka';
+    select
+    title,
+    type,
+    director 
+    from netflix1
+    where director ILIKE '%rajiv chilaka%'
 ```
 
 **Objective:** List all content directed by 'Rajiv Chilaka'.
@@ -150,10 +139,13 @@ WHERE director_name = 'Rajiv Chilaka';
 ### 8. List All TV Shows with More Than 5 Seasons
 
 ```sql
-SELECT *
-FROM netflix
-WHERE type = 'TV Show'
-  AND SPLIT_PART(duration, ' ', 1)::INT > 5;
+select
+*
+from netflix1
+where 
+type = 'TV Show'
+AND
+SPLIT_PART(duration, ' ' , 1)::numeric > 5;
 ```
 
 **Objective:** Identify TV shows with more than 5 seasons.
@@ -196,7 +188,7 @@ LIMIT 5;
 ```sql
 SELECT * 
 FROM netflix
-WHERE listed_in LIKE '%Documentaries';
+WHERE listed_in LIKE '%Documentaries%';
 ```
 
 **Objective:** Retrieve all movies classified as documentaries.
@@ -264,20 +256,3 @@ GROUP BY category;
 - **Content Categorization:** Categorizing content based on specific keywords helps in understanding the nature of content available on Netflix.
 
 This analysis provides a comprehensive view of Netflix's content and can help inform content strategy and decision-making.
-
-
-
-## Author - Zero Analyst
-
-This project is part of my portfolio, showcasing the SQL skills essential for data analyst roles. If you have any questions, feedback, or would like to collaborate, feel free to get in touch!
-
-### Stay Updated and Join the Community
-
-For more content on SQL, data analysis, and other data-related topics, make sure to follow me on social media and join our community:
-
-- **YouTube**: [Subscribe to my channel for tutorials and insights](https://www.youtube.com/@zero_analyst)
-- **Instagram**: [Follow me for daily tips and updates](https://www.instagram.com/zero_analyst/)
-- **LinkedIn**: [Connect with me professionally](https://www.linkedin.com/in/najirr)
-- **Discord**: [Join our community to learn and grow together](https://discord.gg/36h5f2Z5PK)
-
-Thank you for your support, and I look forward to connecting with you!
